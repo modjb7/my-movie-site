@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — My Movie Vault</title>
+
+<!--
+  ============================================================
+  ONE-TIME SETUP (do this once before using this page)
+  ============================================================
+  1. Change ADMIN_PASSWORD below to something only you know.
+  2. Create a GitHub token:
+     - Go to github.com/settings/tokens?type=beta
+     - Click "Generate new token"
+     - Give it a name like "movie-site-admin"
+     - Under "Repository access" choose "Only select repositories"
+       and pick this movie site repo
+     - Under "Permissions" find "Contents" and set it to "Read and write"
+     - Click "Generate token" and COPY IT (you won't see it again)
+  3. You'll paste this token into the admin page each time you log in.
+     It is never saved anywhere — just kept in memory while the tab is open.
+  ============================================================
+-->
+
+<style>
+  :root{
+    --ink:#151312;
+    --paper:#EDE7DC;
+    --panel:#1D1B19;
+    --reel:#C4432B;
+    --reel-dim:#8f3120;
+    --gold:#C9A24B;
+    --line:#3a3733;
+    --ok:#5a9c6b;
+    --err:#c4432b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Courier New', ui-monospace, monospace;
+    line-height:1.5;
+    padding:24px 16px 80px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  h1{
+    font-family:Georgia, serif;
+    font-style:italic;
+    font-size:28px;
+    margin:12px 0 4px;
+  }
+  .sub{color:#9c9690;font-size:13px;margin-bottom:28px;}
+  a.back{color:var(--gold);font-size:12px;text-decoration:none;}
+
+  .box{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:20px;
+  }
+  label{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:14px 0 6px;
+  }
+  label:first-child{margin-top:0;}
+  input, textarea{
+    width:100%;
+    background:#0f0e0d;
+    border:1px solid var(--line);
+    color:var(--paper);
+    padding:10px 12px;
+    border-radius:6px;
+    font-family:inherit;
+    font-size:13px;
+  }
+  input:focus, textarea:focus{outline:1px solid var(--reel);}
+  textarea{resize:vertical;min-height:60px;}
+
+  button{
+    font-family:inherit;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-size:12px;
+    border:none;
+    border-radius:6px;
+    padding:12px 18px;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--reel);color:#fff;width:100%;margin-top:18px;}
+  .btn-primary:hover{background:var(--reel-dim);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-secondary{background:transparent;border:1px solid var(--line);color:var(--paper);}
+  .btn-danger{background:transparent;border:1px solid var(--err);color:var(--err);font-size:11px;padding:6px 10px;}
+
+  .status{
+    margin-top:14px;
+    font-size:12.5px;
+    padding:10px 12px;
+    border-radius:6px;
+    display:none;
+  }
+  .status.show{display:block;}
+  .status.ok{background:rgba(90,156,107,0.15);color:var(--ok);border:1px solid var(--ok);}
+  .status.err{background:rgba(196,67,43,0.15);color:#e77a63;border:1px solid var(--err);}
+  .status.pending{background:rgba(201,162,75,0.12);color:var(--gold);border:1px solid var(--gold);}
+
+  #login-screen{max-width:360px;margin:80px auto 0;}
+
+  .movie-item{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px;
+    margin-bottom:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .movie-item .info{font-size:13px;}
+  .movie-item .info b{display:block;color:var(--paper);}
+  .movie-item .info span{color:#8f887f;font-size:11.5px;}
+  .movie-actions{display:flex;gap:6px;flex-shrink:0;}
+  .btn-edit{background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;padding:6px 10px;}
+
+  .hidden{display:none !important;}
+  hr{border:none;border-top:1px dashed var(--line);margin:24px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="index.html">← Back to site</a>
+
+  <!-- ================= LOGIN SCREEN ================= -->
+  <div id="login-screen">
+    <h1>Admin Login</h1>
+    <p class="sub">Enter your password to manage this week's movies.</p>
+    <div class="box">
+      <label for="pw-input">Password</label>
+      <input type="password" id="pw-input" placeholder="••••••••">
+      <button class="btn-primary" id="login-btn">Log in</button>
+      <div class="status err" id="login-status"></div>
+    </div>
+  </div>
+
+  <!-- ================= ADMIN PANEL (hidden until login) ================= -->
+  <div id="panel" class="hidden">
+    <h1>Manage Movies</h1>
+    <p class="sub">Changes publish straight to your live site.</p>
+
+    <!-- GitHub connection -->
+    <div class="box" id="token-box">
+      <label for="gh-owner">GitHub username</label>
+      <input type="text" id="gh-owner" placeholder="yourusername">
+      <label for="gh-repo">Repository name</label>
+      <input type="text" id="gh-repo" placeholder="my-movie-site">
+      <label for="gh-token">GitHub token (see setup notes in this file)</label>
+      <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
+      <button class="btn-secondary" id="connect-btn" style="margin-top:14px;width:100%;">Connect</button>
+      <div class="status" id="connect-status"></div>
+    </div>
+
+    <!-- Movie list + editor, shown after connecting -->
+    <div id="editor-area" class="hidden">
+      <div class="box">
+        <label id="form-heading">Add a new movie</label>
+        <label for="f-title">Title</label>
+        <input type="text" id="f-title" placeholder="Movie name">
+        <label for="f-desc">Description</label>
+        <textarea id="f-desc" placeholder="One line description"></textarea>
+        <label for="f-poster">Poster image URL</label>
+        <input type="text" id="f-poster" placeholder="https://...">
+        <label for="f-drive">Download link (Google Drive share link)</label>
+        <input type="text" id="f-drive" placeholder="https://drive.google.com/...">
+        <label for="f-watch">Watch link (Google Drive /preview link)</label>
+        <input type="text" id="f-watch" placeholder="https://drive.google.com/file/d/.../preview">
+        <label for="f-date">Date</label>
+        <input type="text" id="f-date" placeholder="17 Aug 2026">
+
+        <button class="btn-primary" id="save-btn">Publish to live site</button>
+        <button class="btn-secondary hidden" id="cancel-edit-btn" style="width:100%;margin-top:8px;">Cancel edit</button>
+        <div class="status" id="save-status"></div>
+      </div>
+
+      <hr>
+
+      <label>Current movies (newest first)</label>
+      <div id="movie-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   1. Change this password to your own secret before publishing.
+      This only gates the admin UI on this device/browser — the
+      GitHub token is the real protection, so keep that private.
+   ============================================================ */
+const ADMIN_PASSWORD = "changeme123";
+
+let ghOwner = '', ghRepo = '', ghToken = '';
+let movies = [];
+let currentSha = null; // needed by GitHub API to update the file safely
+let editingIndex = null; // null = adding new, number = editing existing
+
+/* ---------- Login ---------- */
+document.getElementById('login-btn').addEventListener('click', () => {
+  const val = document.getElementById('pw-input').value;
+  const statusEl = document.getElementById('login-status');
+  if (val === ADMIN_PASSWORD) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('panel').classList.remove('hidden');
+  } else {
+    statusEl.textContent = 'Wrong password.';
+    statusEl.classList.add('show');
+  }
+});
+document.getElementById('pw-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+
+/* ---------- Connect to GitHub & load current movies.json ---------- */
+document.getElementById('connect-btn').addEventListener('click', async () => {
+  ghOwner = document.getElementById('gh-owner').value.trim();
+  ghRepo = document.getElementById('gh-repo').value.trim();
+  ghToken = document.getElementById('gh-token').value.trim();
+  const statusEl = document.getElementById('connect-status');
+
+  if (!ghOwner || !ghRepo || !ghToken) {
+    setStatus(statusEl, 'err', 'Fill in all three fields.');
+    return;
+  }
+  setStatus(statusEl, 'pending', 'Connecting…');
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/movies.json`, {
+      headers: { Authorization: `Bearer ${ghToken}` }
+    });
+    if (!res.ok) throw new Error(res.status === 404 ? 'movies.json not found in repo' : `GitHub error ${res.status}`);
+    const data = await res.json();
+    currentSha = data.sha;
+    const decoded = decodeURIComponent(escape(atob(data.content)));
+    movies = JSON.parse(decoded);
+
+    setStatus(statusEl, 'ok', 'Connected! Loaded ' + movies.length + ' movie(s).');
+    document.getElementById('editor-area').classList.remove('hidden');
+    renderMovieList();
+  } catch (err) {
+    setStatus(statusEl, 'err', 'Could not connect: ' + err.message);
+  }
+});
+
+/* ---------- Render current movie list with Edit/Delete ---------- */
+function renderMovieList(){
+  const listEl = document.getElementById('movie-list');
+  listEl.innerHTML = '';
+  if (movies.length === 0) {
+    listEl.innerHTML = '<p style="color:#8f887f;font-size:12px;">No movies yet — add one above.</p>';
+    return;
+  }
+  movies.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.className = 'movie-item';
+    row.innerHTML = `
+      <div class="info">
+        <b>${escapeHTML(m.title)}</b>
+        <span>${escapeHTML(m.date || '')}</span>
+      </div>
+      <div class="movie-actions">
+        <button class="btn-edit" data-i="${i}">Edit</button>
+        <button class="btn-danger" data-del="${i}">Delete</button>
+      </div>
+    `;
+    listEl.appendChild(row);
+  });
+
+  listEl.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => loadIntoForm(parseInt(btn.dataset.i)));
+  });
+  listEl.querySelectorAll('.btn-danger').forEach(btn => {
+    btn.addEventListener('click', () => deleteMovie(parseInt(btn.dataset.del)));
+  });
+}
+
+function loadIntoForm(i){
+  editingIndex = i;
+  const m = movies[i];
+  document.getElementById('f-title').value = m.title || '';
+  document.getElementById('f-desc').value = m.desc || '';
+  document.getElementById('f-poster').value = m.poster || '';
+  document.getElementById('f-drive').value = m.driveLink || '';
+  document.getElementById('f-watch').value = m.watchLink || '';
+  document.getElementById('f-date').value = m.date || '';
+  document.getElementById('form-heading').textContent = 'Editing: ' + m.title;
+  document.getElementById('cancel-edit-btn').classList.remove('hidden');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
+
+function resetForm(){
+  editingIndex = null;
+  ['f-title','f-desc','f-poster','f-drive','f-watch','f-date'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('form-heading').textContent = 'Add a new movie';
+  document.getElementById('cancel-edit-btn').classList.add('hidden');
+}
+
+function deleteMovie(i){
+  if (!confirm('Delete "' + movies[i].title + '"? This publishes immediately.')) return;
+  movies.splice(i, 1);
+  publishToGitHub('Delete movie via admin panel');
+}
+
+/* ---------- Save (add or update) ---------- */
+document.getElementById('save-btn').addEventListener('click', () => {
+  const entry = {
+    title: document.getElementById('f-title').value.trim(),
+    desc: document.getElementById('f-desc').value.trim(),
+    poster: document.getElementById('f-poster').value.trim(),
+    driveLink: document.getElementById('f-drive').value.trim(),
+    watchLink: document.getElementById('f-watch').value.trim(),
+    date: document.getElementById('f-date').value.trim()
+  };
+  if (!entry.title || !entry.driveLink) {
+    setStatus(document.getElementById('save-status'), 'err', 'Title and Download link are required.');
+    return;
+  }
+
+  if (editingIndex !== null) {
+    movies[editingIndex] = entry;
+  } else {
+    movies.unshift(entry); // newest goes to top
+  }
+  publishToGitHub(editingIndex !== null ? 'Update movie via admin panel' : 'Add movie via admin panel');
+});
+
+/* ---------- Publish movies.json straight to the live repo ---------- */
+async function publishToGitHub(message){
+  const statusEl = document.getElementById('save-status');
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.disabled = true;
+  setStatus(statusEl, 'pending', 'Publishing…');
+
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(movies, null, 2))));
+    const res = await fetch(`https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/movies.json`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${ghToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message,
+        content,
+        sha: currentSha
+      })
+    });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.message || `GitHub error ${res.status}`);
+    }
+    const result = await res.json();
+    currentSha = result.content.sha; // update sha for next save
+
+    setStatus(statusEl, 'ok', 'Published! Your live site will update within a minute.');
+    resetForm();
+    renderMovieList();
+  } catch (err) {
+    setStatus(statusEl, 'err', 'Publish failed: ' + err.message);
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+/* ---------- helpers ---------- */
+function setStatus(el, type, msg){
+  el.className = 'status show ' + type;
+  el.textContent = msg;
+}
+function escapeHTML(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>

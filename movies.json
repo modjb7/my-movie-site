@@ -1,0 +1,18 @@
+[
+  {
+    "title": "Sample Film One",
+    "desc": "Replace this with your movie's description.",
+    "poster": "",
+    "driveLink": "https://drive.google.com/",
+    "watchLink": "https://drive.google.com/file/d/YOUR_FILE_ID/preview",
+    "date": "17 Aug 2026"
+  },
+  {
+    "title": "Sample Film Two",
+    "desc": "Replace this with your movie's description.",
+    "poster": "",
+    "driveLink": "https://drive.google.com/",
+    "watchLink": "https://drive.google.com/file/d/YOUR_FILE_ID/preview",
+    "date": "17 Aug 2026"
+  }
+]

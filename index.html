@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Movie Vault — New releases every week</title>
+
+<!--
+  ============================================================
+  HOW TO ADD YOUR WEEKLY MOVIES (no coding needed)
+  ============================================================
+  Scroll down to the "MOVIES" list below (search for MOVIES = [).
+  Copy one block, paste it, and fill in your own details:
+
+  {
+    title: "Movie Name",
+    desc: "One line description.",
+    poster: "https://your-image-link.jpg",   // any image URL works
+    driveLink: "https://drive.google.com/...", // your Drive share link
+    date: "17 Aug 2026"
+  },
+
+  Newest movies should go at the TOP of the list.
+  Save the file and re-upload it to your host. That's it.
+  ============================================================
+-->
+
+<style>
+  :root{
+    --ink:#151312;
+    --paper:#EDE7DC;
+    --panel:#1D1B19;
+    --reel:#C4432B;
+    --reel-dim:#8f3120;
+    --gold:#C9A24B;
+    --line:#3a3733;
+    --radius:10px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Courier New', ui-monospace, monospace;
+    line-height:1.5;
+  }
+
+  /* ---------- Header / Marquee ---------- */
+  header{
+    padding:64px 24px 46px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse 900px 500px at 20% -10%, rgba(196,67,43,0.55), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 85% 0%, rgba(201,162,75,0.4), transparent 55%),
+      radial-gradient(ellipse 700px 600px at 50% 110%, rgba(122,58,163,0.35), transparent 60%),
+      linear-gradient(180deg, #1D1210 0%, #150F0D 100%);
+    border-bottom:2px solid var(--reel);
+    box-shadow:0 8px 40px -12px rgba(196,67,43,0.5);
+  }
+  header::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 38px, rgba(255,214,150,0.06) 38px 40px);
+    pointer-events:none;
+  }
+  header::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:5px;
+    background:linear-gradient(90deg, var(--reel), var(--gold), #7A3AA3, var(--reel));
+    background-size:200% 100%;
+    animation:shimmer 6s linear infinite;
+  }
+  @keyframes shimmer{
+    0%{background-position:0% 0%;}
+    100%{background-position:200% 0%;}
+  }
+  .eyebrow{
+    letter-spacing:.35em;
+    font-size:11px;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:14px;
+    text-shadow:0 0 18px rgba(201,162,75,0.5);
+  }
+  h1{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-weight:700;
+    font-style:italic;
+    font-size:clamp(34px,7vw,64px);
+    margin:0 0 12px;
+    color:#fff;
+    letter-spacing:-0.01em;
+    text-shadow:0 2px 30px rgba(196,67,43,0.6);
+  }
+  h1 span{
+    background:linear-gradient(90deg, var(--reel), var(--gold));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .tagline{
+    color:#d8cfc4;
+    font-size:14px;
+    max-width:520px;
+    margin:0 auto;
+  }
+  .update-badge{
+    display:inline-block;
+    margin-top:22px;
+    padding:7px 16px;
+    background:linear-gradient(90deg, var(--reel), #e0663f);
+    border:1px solid var(--reel);
+    color:#fff;
+    font-size:11px;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    border-radius:999px;
+    box-shadow:0 4px 18px -4px rgba(196,67,43,0.7);
+  }
+
+  /* ---------- Grid ---------- */
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:48px 20px 80px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+    gap:26px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transition:transform .18s ease, border-color .18s ease;
+  }
+  .card:hover{
+    transform:translateY(-4px);
+    border-color:var(--reel-dim);
+  }
+  .poster-wrap{
+    position:relative;
+    aspect-ratio:2/3;
+    background:#0f0e0d;
+    overflow:hidden;
+  }
+  .poster-wrap img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .poster-wrap .no-image{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100%;
+    color:#514d47;
+    font-size:12px;
+    letter-spacing:.1em;
+  }
+  .card-body{
+    padding:16px 16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1;
+  }
+  .card-date{
+    font-size:10px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+  }
+  .card-title{
+    font-family:Georgia, serif;
+    font-weight:700;
+    font-size:18px;
+    color:var(--paper);
+    margin:0;
+  }
+  .card-desc{
+    font-size:12.5px;
+    color:#a39d95;
+    margin:0;
+    flex:1;
+  }
+  .download-btn{
+    margin-top:4px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:10px 14px;
+    background:var(--reel);
+    color:#fff;
+    text-decoration:none;
+    font-size:12.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    border-radius:6px;
+    font-family:'Courier New', monospace;
+    font-weight:700;
+    transition:background .15s ease;
+  }
+  .download-btn:hover{background:var(--reel-dim);}
+
+  footer{
+    text-align:center;
+    padding:30px 20px 40px;
+    font-size:11px;
+    color:#514d47;
+    border-top:1px dashed var(--line);
+  }
+
+  /* ---------- Actions row (Watch + Download) ---------- */
+  .actions{
+    display:flex;
+    gap:8px;
+    margin-top:4px;
+  }
+  .actions a, .actions button{
+    flex:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:10px 10px;
+    text-decoration:none;
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    border-radius:6px;
+    font-family:'Courier New', monospace;
+    font-weight:700;
+    border:none;
+    cursor:pointer;
+  }
+  .watch-btn{
+    background:transparent;
+    color:var(--gold);
+    border:1px solid var(--gold) !important;
+  }
+  .watch-btn:hover{background:rgba(201,162,75,0.12);}
+
+  /* ---------- Watch modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(10,9,8,0.92);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    width:100%;
+    max-width:900px;
+  }
+  .modal-frame-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    background:#000;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .modal-frame-wrap iframe, .modal-frame-wrap video{
+    width:100%; height:100%;
+    border:0;
+    display:block;
+  }
+  .modal-close{
+    display:block;
+    margin:14px auto 0;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--paper);
+    padding:8px 20px;
+    border-radius:6px;
+    font-family:'Courier New', monospace;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-size:11px;
+    cursor:pointer;
+  }
+  .modal-close:hover{border-color:var(--reel);}
+
+  @media (max-width:480px){
+    header{padding:40px 16px 30px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Independent &amp; Original Films</div>
+  <h1>My Movie <span>Vault</span></h1>
+  <p class="tagline">New films added every week — free to watch, free to download.</p>
+  <div class="update-badge">● Updated weekly — 10 new films</div>
+
+  <!-- MONETAG: paste your single ad script tag (push/popunder) anywhere here or right before </body> -->
+</header>
+
+<main>
+  <div class="grid" id="movie-grid"></div>
+</main>
+
+<div class="modal-overlay" id="watch-modal">
+  <div class="modal-box">
+    <div class="modal-frame-wrap" id="modal-frame-wrap"></div>
+    <button class="modal-close" id="modal-close-btn">Close ✕</button>
+  </div>
+</div>
+
+<footer>
+  Built with your own original films. <a href="admin.html" style="color:#514d47;">Admin</a>
+</footer>
+
+<script>
+/* ============================================================
+   Movies are now loaded from movies.json (edited via admin.html)
+   ============================================================ */
+const grid = document.getElementById('movie-grid');
+
+fetch('movies.json?t=' + Date.now()) // cache-bust so updates show immediately
+  .then(res => res.json())
+  .then(renderMovies)
+  .catch(() => {
+    grid.innerHTML = '<p style="color:#a39d95;grid-column:1/-1;text-align:center;">Could not load movie list. Check movies.json exists in the repo.</p>';
+  });
+
+function renderMovies(MOVIES){
+  grid.innerHTML = '';
+  MOVIES.forEach(movie => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const posterHTML = movie.poster
+      ? `<img src="${movie.poster}" alt="${movie.title} poster" loading="lazy">`
+      : `<div class="no-image">NO POSTER</div>`;
+
+    card.innerHTML = `
+      <div class="poster-wrap">${posterHTML}</div>
+      <div class="card-body">
+        <div class="card-date">${movie.date}</div>
+        <h3 class="card-title">${movie.title}</h3>
+        <p class="card-desc">${movie.desc}</p>
+        <div class="actions">
+          <button class="watch-btn" data-watch="${movie.watchLink || ''}">▶ Watch</button>
+          <a class="download-btn" href="${movie.driveLink}" target="_blank" rel="noopener">Download ↓</a>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  attachWatchHandlers();
+}
+
+/* ---------- Watch modal logic ---------- */
+const modal = document.getElementById('watch-modal');
+const frameWrap = document.getElementById('modal-frame-wrap');
+const closeBtn = document.getElementById('modal-close-btn');
+
+function attachWatchHandlers(){
+  document.querySelectorAll('.watch-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const link = btn.getAttribute('data-watch');
+      if (!link) {
+        alert('No watch link set for this film yet.');
+        return;
+      }
+      frameWrap.innerHTML = `<iframe src="${link}" allow="autoplay" allowfullscreen></iframe>`;
+      modal.classList.add('open');
+    });
+  });
+}
+
+function closeModal(){
+  modal.classList.remove('open');
+  frameWrap.innerHTML = ''; // stops playback when closed
+}
+closeBtn.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+</script>
+
+<!-- MONETAG SCRIPT — paste your single ad script tag here (push notification / popunder code) -->
+
+
+</body>
+</html>
